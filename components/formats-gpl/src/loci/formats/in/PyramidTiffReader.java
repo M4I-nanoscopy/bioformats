@@ -194,9 +194,9 @@ public class PyramidTiffReader extends BaseTiffReader {
     double x = ifd.getXResolution();
     double y = ifd.getYResolution();
     
-    Length lx = FormatTools.getPhysicalSizeX(x, UNITS.NM);
-    Length ly = FormatTools.getPhysicalSizeX(y, UNITS.NM);
-    
+    Length lx = FormatTools.getPhysicalSizeX(x, UNITS.M);
+    Length ly = FormatTools.getPhysicalSizeX(y, UNITS.M);
+       
     store.setPixelsPhysicalSizeX(lx, coreIndex);
     store.setPixelsPhysicalSizeY(ly, coreIndex);
     
@@ -208,8 +208,8 @@ public class PyramidTiffReader extends BaseTiffReader {
     }
     
     // Store to non structured metadata
-    addGlobalMeta("Pixel size x (nm)", x);
-    addGlobalMeta("Pixel size y (nm)", y);
+    addGlobalMeta("Pixel size x (m)", x);
+    addGlobalMeta("Pixel size y (m)", y);
     addGlobalMeta("Min", min);
     addGlobalMeta("Max", max);
     addGlobalMeta("Conversion matrix", Arrays.toString(matrix));
