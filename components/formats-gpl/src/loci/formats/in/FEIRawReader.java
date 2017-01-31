@@ -51,9 +51,34 @@ public class FEIRawReader extends FormatReader {
 
   /** Constructs a new FEI reader. */
   public FEIRawReader() {
-    super("FEI MAPS raw", "scios");
-    suffixSufficient = true;
+    super("FEI MAPS raw", new String[] {"scios", "raw"});
+    suffixNecessary = false;
+    suffixSufficient = false;
     domains = new String[] {FormatTools.SEM_DOMAIN};
+  }
+  
+  
+  // -- IFormatReader API methods --
+
+  /* @see loci.formats.IFormatReader#isThisType(String, boolean) */
+  @Override
+  public boolean isThisType(String name, boolean open) {    
+    try {
+      this.getDimensionsFromName(name);
+    } catch( FormatException e ) {
+        return false;
+    }
+    
+    return super.isThisType(name, open);
+  }
+  
+   /* @see IFormatReader#isThisType(RandomAccessInputStream) */
+  @Override
+  public boolean isThisType(RandomAccessInputStream stream) throws IOException {
+      final int blockLen = 4;
+      if (!FormatTools.validStream(stream, blockLen, true)) return false;
+      
+      return true;
   }
 
   // -- IFormatReader API methods --
@@ -120,7 +145,7 @@ public class FEIRawReader extends FormatReader {
    * @throws FormatException 
    */
   private void getDimensionsFromName(String name) throws FormatException {
-    Pattern p = Pattern.compile("([0-9]+?)x([0-9]+?).scios");
+    Pattern p = Pattern.compile("([0-9]+?)x([0-9]+?).(scios|raw)");
     
     Matcher m = p.matcher(name);
     
