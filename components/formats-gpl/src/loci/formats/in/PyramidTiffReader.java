@@ -38,6 +38,11 @@ import loci.formats.meta.MetadataStore;
 import loci.formats.tiff.IFD;
 import loci.formats.tiff.PhotoInterp;
 import loci.formats.tiff.TiffParser;
+import ome.units.UNITS;
+import ome.units.quantity.Length;
+import loci.formats.meta.IMinMaxStore;
+import java.util.Arrays;
+
 
 /**
  * PyramidTiffReader is the file format reader for pyramid TIFFs.
@@ -167,6 +172,47 @@ public class PyramidTiffReader extends BaseTiffReader {
     super.initMetadataStore();
 
     MetadataStore store = makeFilterMetadata();
+    
+    if (store instanceof IMinMaxStore) {
+        IMinMaxStore minMaxStore = (IMinMaxStore) store;
+        LOGGER.info("Setting minmax");
+        minMaxStore.setChannelGlobalMinMax(0, 3000, 8000, series);
+    }
+    
+    IFD ifd = ifds.get(getCoreIndex());
+    
+    // min max values
+    double min = ifd.getIFDIntValue(IFD.MIN_SAMPLE_VALUE);
+    double max = ifd.getIFDIntValue(IFD.MAX_SAMPLE_VALUE);
+    
+    if (store instanceof IMinMaxStore) {
+        IMinMaxStore minMaxStore = (IMinMaxStore) store;
+        minMaxStore.setChannelGlobalMinMax(0, min, max, series);
+    }
+    
+    // Get pixel size
+    double x = ifd.getXResolution();
+    double y = ifd.getYResolution();
+    
+    Length lx = FormatTools.getPhysicalSizeX(x, UNITS.NM);
+    Length ly = FormatTools.getPhysicalSizeX(y, UNITS.NM);
+    
+    store.setPixelsPhysicalSizeX(lx, coreIndex);
+    store.setPixelsPhysicalSizeY(ly, coreIndex);
+    
+    // Get conversion matrix from GeoDoubleParamsTag
+    Object value = ifd.getIFDValue(34736);
+    double[] matrix = null;
+    if (value instanceof double[]) {
+        matrix = (double[]) value;
+    }
+    
+    // Store to non structured metadata
+    addGlobalMeta("Pixel size x (nm)", x);
+    addGlobalMeta("Pixel size y (nm)", y);
+    addGlobalMeta("Min", min);
+    addGlobalMeta("Max", max);
+    addGlobalMeta("Conversion matrix", Arrays.toString(matrix));
 
     for (int i=0; i<getSeriesCount(); i++) {
       store.setImageName("Series " + (i + 1), i);
